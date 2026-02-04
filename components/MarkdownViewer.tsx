@@ -2,21 +2,25 @@
 
 import React, { useState } from "react";
 import { Toolbar } from "./Toolbar";
+import { TableOfContents } from "./TableOfContents";
 import { cn } from "@/lib/utils";
 import { useFileHandler } from "@/hooks/useFileHandler";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { useTheme } from "next-themes";
 import MarkdownPreview from "./MarkdownPreview";
 import { remark } from "remark";
 import html from "remark-html";
 
 export default function MarkdownViewer() {
-    const { content, fileName, isModified, setContent, openFile, handleDrop } = useFileHandler("# Welcome to Local Markdown Viewer\n\nStart typing or drag a file here.");
+    const { content, fileName, isModified, fileHandle, setContent, openFile, saveFile, handleDrop } = useFileHandler(
+        "# Welcome to Local Markdown Viewer\n\nStart typing or drag a file here."
+    );
     const [viewMode, setViewMode] = useState<"split" | "editor" | "preview">("split");
+    const { setTheme, theme } = useTheme();
 
     const handleExportHtml = async () => {
         try {
-            const processedContent = await remark()
-                .use(html)
-                .process(content);
+            const processedContent = await remark().use(html).process(content);
             const contentHtml = processedContent.toString();
 
             const fullHtml = `<!DOCTYPE html>
@@ -61,6 +65,20 @@ export default function MarkdownViewer() {
         window.print();
     };
 
+    // Keyboard shortcuts
+    useKeyboardShortcuts({
+        onOpen: openFile,
+        onSave: fileHandle ? saveFile : undefined,
+        onExportHtml: handleExportHtml,
+        onExportPdf: handleExportPdf,
+        onToggleView: () => {
+            setViewMode((prev) => (prev === "split" ? "editor" : prev === "editor" ? "preview" : "split"));
+        },
+        onToggleTheme: () => {
+            setTheme(theme === "dark" ? "light" : "dark");
+        },
+    });
+
     const [isDragging, setIsDragging] = useState(false);
     const onDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -80,8 +98,11 @@ export default function MarkdownViewer() {
             onDrop={onDrop}
         >
             <div className="flex items-center justify-between px-4 py-1 bg-background border-b text-xs text-muted-foreground print:hidden">
-                <span>{fileName}{isModified ? "*" : ""}</span>
-                <span className="hidden sm:inline">Local Storage & File System Access</span>
+                <span>
+                    {fileName}
+                    {isModified ? "*" : ""}
+                </span>
+                <span className="hidden sm:inline">Auto-saved to Local Storage</span>
             </div>
 
             <div className="print:hidden">
@@ -103,10 +124,12 @@ export default function MarkdownViewer() {
                 )}
 
                 {/* Editor Pane */}
-                <div className={cn(
-                    "flex-1 flex flex-col min-w-0 border-r transition-all duration-300 print:hidden bg-background",
-                    viewMode === "preview" ? "hidden" : "flex"
-                )}>
+                <div
+                    className={cn(
+                        "flex-1 flex flex-col min-w-0 border-r transition-all duration-300 print:hidden bg-background",
+                        viewMode === "preview" ? "hidden" : "flex"
+                    )}
+                >
                     <textarea
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
@@ -117,39 +140,43 @@ export default function MarkdownViewer() {
                 </div>
 
                 {/* Preview Pane */}
-                <div className={cn(
-                    "flex-1 flex flex-col min-w-0 bg-secondary/30 transition-all duration-300 overflow-hidden print:bg-white print:overflow-visible print:block",
-                    viewMode === "editor" ? "hidden" : "flex"
-                )}>
+                <div
+                    className={cn(
+                        "flex-1 flex flex-col min-w-0 bg-secondary/30 transition-all duration-300 overflow-hidden print:bg-white print:overflow-visible print:block",
+                        viewMode === "editor" ? "hidden" : "flex"
+                    )}
+                >
                     <div className="h-full w-full overflow-auto p-8 print:p-0 print:overflow-visible">
                         <MarkdownPreview content={content} />
                     </div>
                 </div>
             </main>
 
+            {/* Table of Contents */}
+            <TableOfContents content={content} />
+
             {/* Print Styles */}
             <style jsx global>{`
         @media print {
-            body {
-                background: white;
-                color: black;
-            }
-            .print\\:hidden {
-                display: none !important;
-            }
-            .print\\:block {
-                display: block !important;
-            }
-            .print\\:overflow-visible {
-                overflow: visible !important;
-            }
-            .print\\:h-auto {
-                height: auto !important;
-            }
-            /* Hide scrollbars during print */
-            ::-webkit-scrollbar {
-                display: none;
-            }
+          body {
+            background: white;
+            color: black;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+          .print\\:block {
+            display: block !important;
+          }
+          .print\\:overflow-visible {
+            overflow: visible !important;
+          }
+          .print\\:h-auto {
+            height: auto !important;
+          }
+          ::-webkit-scrollbar {
+            display: none;
+          }
         }
       `}</style>
         </div>

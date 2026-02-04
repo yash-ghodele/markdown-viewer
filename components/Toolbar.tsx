@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Moon, Sun, Upload, FileText, Columns, Eye, Download, FileUp } from "lucide-react";
+import { Moon, Sun, FileText, Columns, Eye, Download, FileUp } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 
@@ -93,7 +93,17 @@ export function Toolbar({
     );
 }
 
-function ViewToggle({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: any; label: string }) {
+function ViewToggle({
+    active,
+    onClick,
+    icon: Icon,
+    label,
+}: {
+    active: boolean;
+    onClick: () => void;
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+}) {
     return (
         <button
             onClick={onClick}
