@@ -107,12 +107,3 @@ function ViewToggle({ active, onClick, icon: Icon, label }: { active: boolean; o
         </button>
     );
 }
-
-function ExpandableIcon({ icon: Icon, label }: { icon: any; label: string }) {
-    return (
-        <>
-            <Icon className="w-4 h-4" />
-            <span>{label}</span>
-        </>
-    )
-}
